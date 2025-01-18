@@ -32,5 +32,5 @@ type UpdateOrderStatusRequest struct {
 }
 
 type GetOrdersRequest struct {
-	UserID string `json:"user_id"`
+	UserID entity.GetOrders `json:"user_id"`
 }

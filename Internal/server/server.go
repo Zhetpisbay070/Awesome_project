@@ -76,23 +76,21 @@ func (s *Server) UpdateOrderStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Order status updated successfully"})
 }
 
-//func (s *Server) GetOrders(ctx *gin.Context) {
-//	var req GetOrdersRequest
-//
-//	err := ctx.BindJSON(&req)
-//	if err != nil{
-//
-//		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//		orders, err := s.service.GetOrders(ctx, req.UserID)
-//		if err != nil {
-//			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-//			return
-//		}
-//
-//		ctx.JSON(http.StatusOK)
-//	}
-//
-//}
+func (s *Server) GetOrders(ctx *gin.Context) {
+	var req GetOrdersRequest
+
+	err := ctx.BindJSON(&req)
+	if err != nil {
+
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	orders, err := s.service.GetOrders(ctx, &req.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"orders": orders})
+}

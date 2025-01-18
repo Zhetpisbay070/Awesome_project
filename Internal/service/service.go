@@ -98,13 +98,18 @@ func (s *service) UpdateOrderStatus(ctx context.Context, orderStatus entity.Orde
 		} else {
 			return entity.InvalidTransition
 		}
-		if order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {
-			if orderStatus == entity.Cancelled {
-				return entity.PozdnoNahui
-			} else {
-				order.OrderStatus = entity.Cancelled
-			}
+	}
+	if order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {
+		if orderStatus == entity.Cancelled {
+			return entity.PozdnoNahui
+		} else {
+			order.OrderStatus = entity.Cancelled
 		}
+	}
+
+	err = s.repo.UpdateOrder(ctx, order)
+	if err != nil {
+		return err
 	}
 
 	return nil
