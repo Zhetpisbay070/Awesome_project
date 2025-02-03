@@ -1,7 +1,8 @@
 package server
 
 import (
-	"awesomeProject1/Internal/entity"
+	"awesomeProject1/internal/entity"
+	"encoding/json"
 	"time"
 )
 
@@ -33,4 +34,16 @@ type UpdateOrderStatusRequest struct {
 
 type GetOrdersRequest struct {
 	UserID entity.GetOrders `json:"user_id"`
+}
+
+type EditOrderRequest struct {
+	OrderID  string   `json:"1"`
+	Products []string `json:"product_ids"`
+	Address  string   `json:"address"`
+}
+
+type AwesomeTime time.Time
+
+func (t *AwesomeTime) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Time(*t).Format(time.RFC3339))
 }

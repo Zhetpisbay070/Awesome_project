@@ -1,19 +1,43 @@
 package server
 
 import (
-	"awesomeProject1/Internal/entity"
-	"awesomeProject1/Internal/service"
+	"awesomeProject1/internal/entity"
+	"awesomeProject1/internal/repository"
+	_ "awesomeProject1/internal/repository"
+	"awesomeProject1/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
 type Server struct {
 	service service.OrderService
-	router  gin.Engine
+	router  *gin.Engine
+	logger  *logrus.Logger
+	repo    repository.DB
 }
 
-func (s *Server) Run() {
-	s.router.POST("/create", s.CreateOrder)
+func NewServer(service service.OrderService, logger *logrus.Logger) *Server {
+	return &Server{router: gin.New(), service: service, logger: logger}
+}
+
+func (s *Server) Run(port string) error {
+
+	return s.router.Run(":" + port)
+}
+
+func (s *Server) SetupRouter() *gin.Engine {
+	router := gin.New()
+
+	router.POST("/create", s.CreateOrder)
+
+	s.router = router
+
+	return router
+}
+
+func (s *Server) GetRouter() *gin.Engine {
+	return s.router
 }
 
 func (s *Server) CreateOrder(ctx *gin.Context) {
@@ -93,4 +117,48 @@ func (s *Server) GetOrders(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"orders": orders})
+}
+
+func (s *Server) EditRouter() *gin.Engine {
+	router := gin.New()
+
+	router.POST("/edit-router", s.EditOrder)
+
+	return router
+}
+func (s *Server) EditOrder(ctx *gin.Context) {
+	var req EditOrderRequest
+
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	order, err := s.repo.GetOrderByID(ctx, req.OrderID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if order == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Order data is nil"})
+		return
+	}
+
+	updatedOrder := &entity.Order{
+		ID:          req.OrderID,
+		Address:     req.Address,
+		ProductIDs:  req.Products,
+		OrderStatus: order.OrderStatus,
+	}
+
+	err = s.repo.UpdateOrder(ctx, updatedOrder)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Order updated successfully"})
+
 }

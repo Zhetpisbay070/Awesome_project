@@ -51,3 +51,9 @@ type GetOrders struct {
 	Page   uint
 	Asc    bool
 }
+
+type EditOrderRequest struct {
+	OrderID  string
+	Products []string
+	Address  string
+}

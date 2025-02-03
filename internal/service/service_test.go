@@ -1,14 +1,14 @@
 package service_test
 
 import (
-	"awesomeProject1/Internal/service"
 	"awesomeProject1/internal/entity"
 	InternalMock "awesomeProject1/internal/mock"
+	"awesomeProject1/internal/service"
 	"context"
-	"testing"
-
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"testing"
 )
 
 func TestService_CreateOrder(t *testing.T) {
@@ -16,7 +16,10 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+
+		}, logrus.New())
 
 		repo.EXPECT().CreateOrder(mock.Anything, mock.Anything).Return(nil)
 		repo.EXPECT().ProductExist(mock.Anything, mock.Anything).Return(true, nil)
@@ -33,6 +36,7 @@ func TestService_CreateOrder(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, order.UserID, "123")
+		assert.Equal(t, order.ID, "salam")
 		assert.EqualValues(t, len(order.ProductIDs), len(products))
 		for _, productID := range order.ProductIDs {
 			assert.Contains(t, products, productID)
@@ -46,7 +50,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("product does not exist", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		repo.EXPECT().ProductExist(mock.Anything, mock.Anything).Return(false, nil)
 
@@ -67,7 +73,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("impossible to check products", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		repo.EXPECT().ProductExist(mock.Anything, mock.Anything).Return(false, entity.ImpossibleToCheckProducts)
 
@@ -88,7 +96,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("delivery unavailable", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		repo.EXPECT().CreateOrder(mock.Anything, mock.Anything).Return(entity.DelTypeUnavailable)
 		repo.EXPECT().ProductExist(mock.Anything, mock.Anything).Return(true, nil)
@@ -110,7 +120,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("success get order", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		orderList := []entity.Order{
 			{ID: "1", UserID: "1"},
@@ -130,7 +142,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("error - order not found", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		getOrderList := &entity.GetOrders{
 			UserID: "2",
@@ -148,7 +162,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("transition create to paid", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Created,
@@ -159,7 +175,7 @@ func TestService_CreateOrder(t *testing.T) {
 			OrderStatus: entity.Paid,
 			ID:          "1",
 		}
-
+		repo.EXPECT().GetOrderByID(mock.Anything, "1").Return(order, nil)
 		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
 		err := s.UpdateOrderStatus(context.Background(), entity.Paid, "1")
@@ -171,7 +187,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("transition paid to collect", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Paid,
@@ -182,7 +200,7 @@ func TestService_CreateOrder(t *testing.T) {
 			OrderStatus: entity.Collect,
 			ID:          "1",
 		}
-
+		repo.EXPECT().GetOrderByID(mock.Anything, "1").Return(order, nil)
 		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
 		err := s.UpdateOrderStatus(context.Background(), entity.Collect, "1")
@@ -194,7 +212,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("transition collect to collected", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Collect,
@@ -205,7 +225,7 @@ func TestService_CreateOrder(t *testing.T) {
 			OrderStatus: entity.Collected,
 			ID:          "1",
 		}
-
+		repo.EXPECT().GetOrderByID(mock.Anything, "1").Return(order, nil)
 		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
 		err := s.UpdateOrderStatus(context.Background(), entity.Collected, "1")
@@ -217,7 +237,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("transition collected to delivery", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Collected,
@@ -228,7 +250,7 @@ func TestService_CreateOrder(t *testing.T) {
 			OrderStatus: entity.Delivery,
 			ID:          "1",
 		}
-
+		repo.EXPECT().GetOrderByID(mock.Anything, "1").Return(order, nil)
 		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
 		err := s.UpdateOrderStatus(context.Background(), entity.Delivery, "1")
@@ -240,7 +262,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("transition delivery to done", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Delivery,
@@ -251,6 +275,7 @@ func TestService_CreateOrder(t *testing.T) {
 			OrderStatus: entity.Done,
 			ID:          "1",
 		}
+		repo.EXPECT().GetOrderByID(mock.Anything, "1").Return(order, nil)
 
 		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
@@ -263,7 +288,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("wrong transition delivery to cancelled", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Delivery,
@@ -280,7 +307,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("wrong transition done to cancelled", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Done,
@@ -297,7 +326,9 @@ func TestService_CreateOrder(t *testing.T) {
 	t.Run("wrong transition collected to paid", func(t *testing.T) {
 		repo := InternalMock.NewDB(t)
 
-		s := service.NewOrderService(repo)
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
 
 		order := &entity.Order{
 			OrderStatus: entity.Collected,
@@ -309,6 +340,71 @@ func TestService_CreateOrder(t *testing.T) {
 		err := s.UpdateOrderStatus(context.Background(), entity.Paid, "1")
 
 		assert.Error(t, err)
+	})
+
+}
+
+func TestEditOrder(t *testing.T) {
+
+	t.Run("new products", func(t *testing.T) {
+		repo := InternalMock.NewDB(t)
+
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
+
+		repo.EXPECT().GetOrderByID(mock.Anything, mock.Anything).Return(&entity.Order{
+			ID:          "1",
+			Address:     "old address",
+			ProductIDs:  []string{"prod1, prod2"},
+			OrderStatus: entity.Created,
+		}, nil)
+
+		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
+
+		editReq := &entity.EditOrderRequest{
+			OrderID:  "1",
+			Products: []string{"prod3", "prod4"},
+			Address:  "new address",
+		}
+
+		_, err := s.EditOrder(context.Background(), editReq)
+		assert.NoError(t, err)
+
+		updatedOrder := &entity.Order{
+			ID:          "1",
+			Address:     "new address",
+			ProductIDs:  []string{"prod3", "prod4"},
+			OrderStatus: entity.Created,
+		}
+		assert.Equal(t, updatedOrder.Address, "new address")
+		assert.ElementsMatch(t, updatedOrder.ProductIDs, []string{"prod3", "prod4"})
+	})
+
+	t.Run("order cannot be edited", func(t *testing.T) {
+		repo := InternalMock.NewDB(t)
+
+		s := service.NewOrderService(repo, func() string {
+			return "salam"
+		}, logrus.New())
+
+		repo.EXPECT().GetOrderByID(mock.Anything, mock.Anything).Return(&entity.Order{
+			ID:          "1",
+			Address:     "old address",
+			ProductIDs:  []string{"prod1, prod2"},
+			OrderStatus: entity.Done,
+		}, nil)
+
+		//repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
+		//
+		editReq := &entity.EditOrderRequest{
+			OrderID:  "1",
+			Products: []string{"prod3", "prod4"},
+			Address:  "new address",
+		}
+
+		_, err := s.EditOrder(context.Background(), editReq)
+		assert.ErrorIs(t, err, entity.OrderCannotBeEdited)
 	})
 
 }

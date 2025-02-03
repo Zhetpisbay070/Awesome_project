@@ -11,4 +11,7 @@ var (
 	OrderNotFound             = errors.New("order not found")
 	InvalidTransition         = errors.New("invalid transition")
 	PozdnoNahui               = errors.New("uzhe ne otmenit")
+	OrderCannotBeEdited       = errors.New("order cannot be edited in this current status")
+	AddressCannotBeEdited     = errors.New("address cannot be edited")
+	OrderCannotBeChanged      = errors.New("order cannot be changed")
 )
