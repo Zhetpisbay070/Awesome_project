@@ -9,6 +9,7 @@ import (
 	_ "bytes"
 	"encoding/json"
 	_ "encoding/json"
+	_ "errors"
 	_ "github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -85,44 +86,67 @@ func TestServer_CreateOrder(t *testing.T) {
 
 func TestServer_EditOrder(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		repoMock := internalMock.NewDB(t)
 		serviceMock := internalMock.NewOrderService(t)
 
-		reqDTO := &server.EditOrderRequest{
+		reqDTO := &entity.EditOrderRequest{
 			OrderID:  "1",
 			Products: []string{"prod1", "prod2"},
-			Address:  "Old address",
+			Address:  "New Address",
 		}
 
 		reqJSON, err := json.Marshal(reqDTO)
 		assert.NoError(t, err)
 
-		repoMock.EXPECT().GetOrderByID(mock.Anything, mock.Anything).Return(&entity.Order{
-			ID: "1", ProductIDs: []string{"prod1", "prod2"}, Address: "Old address", OrderStatus: entity.Created,
+		serviceMock.EXPECT().EditOrder(mock.Anything, mock.Anything).Return(&entity.Order{
+			ID:         "1",
+			ProductIDs: []string{"prod1", "prod2"},
+			Address:    "New Address",
 		}, nil)
-
-		repoMock.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
-		//	ID:          "1",
-		//	Address:     "New address",
-		//	ProductIDs:  []string{"prod1", "prod2"},
-		//	OrderStatus: entity.Created,
-		//}).Return(nil)
 
 		s := server.NewServer(serviceMock, logrus.New())
 
-		r := s.EditRouter()
+		r := s.SetupRouter()
 
 		w := httptest.NewRecorder()
 
 		body := bytes.NewBuffer(reqJSON)
 
-		req, err := http.NewRequest("POST", "/edit-router", body)
+		req, err := http.NewRequest("POST", "/edit", body)
 		assert.NoError(t, err)
-
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, string(reqJSON), w.Body.String())
 
 	})
+
+	t.Run("order not found", func(t *testing.T) {
+		serviceMock := internalMock.NewOrderService(t)
+
+		reqDTO := &entity.EditOrderRequest{
+			OrderID:  "0000",
+			Products: []string{"prod1", "prod2"},
+			Address:  "New Address",
+		}
+
+		reqJSON, err := json.Marshal(reqDTO)
+		assert.NoError(t, err)
+
+		serviceMock.EXPECT().EditOrder(mock.Anything, mock.Anything).Return(nil, entity.ErrOrderNotFound)
+
+		s := server.NewServer(serviceMock, logrus.New())
+
+		r := s.SetupRouter()
+
+		w := httptest.NewRecorder()
+
+		body := bytes.NewBuffer(reqJSON)
+
+		req, err := http.NewRequest("POST", "/edit", body)
+		assert.NoError(t, err)
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+
+	})
+
 }

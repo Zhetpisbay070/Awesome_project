@@ -149,10 +149,10 @@ func (s *service) GetOrders(ctx context.Context, req *entity.GetOrders) ([]entit
 func (s *service) EditOrder(ctx context.Context, req *entity.EditOrderRequest) (*entity.Order, error) {
 	order, err := s.repo.GetOrderByID(ctx, req.OrderID)
 	if err != nil {
-		return nil, err
+		return nil, entity.ErrOrderNotFound
 	}
 
-	if order.OrderStatus == entity.Collected || order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {
+	if order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {
 		return nil, entity.OrderCannotBeEdited
 	}
 

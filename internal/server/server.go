@@ -27,13 +27,12 @@ func (s *Server) Run(port string) error {
 }
 
 func (s *Server) SetupRouter() *gin.Engine {
-	router := gin.New()
+	s.router = gin.New()
 
-	router.POST("/create", s.CreateOrder)
+	s.router.POST("/create", s.CreateOrder)
+	s.router.POST("/edit", s.EditOrder)
 
-	s.router = router
-
-	return router
+	return s.router
 }
 
 func (s *Server) GetRouter() *gin.Engine {
@@ -119,13 +118,6 @@ func (s *Server) GetOrders(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"orders": orders})
 }
 
-func (s *Server) EditRouter() *gin.Engine {
-	router := gin.New()
-
-	router.POST("/edit-router", s.EditOrder)
-
-	return router
-}
 func (s *Server) EditOrder(ctx *gin.Context) {
 	var req EditOrderRequest
 
@@ -135,30 +127,16 @@ func (s *Server) EditOrder(ctx *gin.Context) {
 		return
 	}
 
-	order, err := s.repo.GetOrderByID(ctx, req.OrderID)
+	order, err := s.service.EditOrder(ctx, &entity.EditOrderRequest{
+		OrderID:  req.OrderID,
+		Products: req.Products,
+		Address:  req.Address,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if order == nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Order data is nil"})
-		return
-	}
-
-	updatedOrder := &entity.Order{
-		ID:          req.OrderID,
-		Address:     req.Address,
-		ProductIDs:  req.Products,
-		OrderStatus: order.OrderStatus,
-	}
-
-	err = s.repo.UpdateOrder(ctx, updatedOrder)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "Order updated successfully"})
+	ctx.JSON(http.StatusOK, order)
 
 }

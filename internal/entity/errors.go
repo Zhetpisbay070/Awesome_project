@@ -14,4 +14,5 @@ var (
 	OrderCannotBeEdited       = errors.New("order cannot be edited in this current status")
 	AddressCannotBeEdited     = errors.New("address cannot be edited")
 	OrderCannotBeChanged      = errors.New("order cannot be changed")
+	ErrOrderNotFound          = errors.New("order not found")
 )
