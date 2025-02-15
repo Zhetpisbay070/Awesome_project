@@ -5,6 +5,7 @@ import (
 	"awesomeProject1/internal/repository"
 	_ "awesomeProject1/internal/repository"
 	"awesomeProject1/internal/service"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -132,6 +133,12 @@ func (s *Server) EditOrder(ctx *gin.Context) {
 		Products: req.Products,
 		Address:  req.Address,
 	})
+
+	if errors.Is(err, entity.ErrOrderNotFound) {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "order not found"})
+		return
+	}
+
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

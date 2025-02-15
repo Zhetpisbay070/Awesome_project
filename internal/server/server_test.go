@@ -9,6 +9,7 @@ import (
 	_ "bytes"
 	"encoding/json"
 	_ "encoding/json"
+	"errors"
 	_ "errors"
 	_ "github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -149,4 +150,33 @@ func TestServer_EditOrder(t *testing.T) {
 
 	})
 
+	t.Run("server error", func(t *testing.T) {
+		serviceMock := internalMock.NewOrderService(t)
+
+		reqDTO := &entity.EditOrderRequest{
+			OrderID:  "1",
+			Products: []string{"prod1", "prod2"},
+			Address:  "New Address",
+		}
+
+		reqJSON, err := json.Marshal(reqDTO)
+		assert.NoError(t, err)
+
+		serviceMock.EXPECT().EditOrder(mock.Anything, mock.Anything).Return(nil, errors.New("server error"))
+
+		s := server.NewServer(serviceMock, logrus.New())
+
+		r := s.SetupRouter()
+
+		w := httptest.NewRecorder()
+
+		body := bytes.NewBuffer(reqJSON)
+
+		req, err := http.NewRequest("POST", "/edit", body)
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	})
 }

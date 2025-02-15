@@ -2,6 +2,7 @@ package repository
 
 import (
 	"awesomeProject1/internal/entity"
+
 	"context"
 	"database/sql"
 	"time"
@@ -76,4 +77,20 @@ WHERE id = ?`,
 	}
 
 	return nil
+}
+func (r *postgresRepository) GetOrders(ctx context.Context, req *entity.GetOrders) ([]entity.Order, error) {
+	var orders []entity.Order
+
+	_, err := r.db.QueryContext(ctx, `
+		SELECT id, user_id, price, delivery_deadline, delivery_type, address, order_status
+		FROM orders
+		WHERE user_id = $1
+		ORDER BY created_at DESC`, req.UserID)
+
+	if err != nil {
+		return nil, err
+
+	}
+
+	return orders, nil
 }
