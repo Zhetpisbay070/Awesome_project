@@ -42,9 +42,9 @@ func TestServer_CreateOrder(t *testing.T) {
 			ID:               "ORD123456",
 			UserID:           "USR78910",
 			ProductIDs:       []string{"PROD001", "PROD002", "PROD003"},
-			CreatedAt:        time.Time(server.AwesomeTime(time.Now())),
-			UpdatedAt:        time.Time(server.AwesomeTime(time.Now())),
-			DeliveryDeadLine: time.Time(server.AwesomeTime(time.Now().Add(48 * time.Hour))),
+			CreatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
+			UpdatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
+			DeliveryDeadLine: time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))).Add(48 * time.Hour),
 			Price:            99.99,
 			DeliveryType:     "Standard",
 			Address:          "123 Main Street, City, Country",
@@ -58,9 +58,9 @@ func TestServer_CreateOrder(t *testing.T) {
 			ID:               "ORD123456",
 			UserID:           "USR78910",
 			ProductIDs:       []string{"PROD001", "PROD002", "PROD003"},
-			CreatedAt:        time.Time(server.AwesomeTime(time.Now())),
-			UpdatedAt:        time.Time(server.AwesomeTime(time.Now())),
-			DeliveryDeadLine: time.Time(server.AwesomeTime(time.Now().Add(48 * time.Hour))), // Delivery deadline set to 2 days from now
+			CreatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
+			UpdatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
+			DeliveryDeadLine: time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))).Add(48 * time.Hour),
 			Price:            99.99,
 			DeliveryType:     "Standard",
 			Address:          "123 Main Street, City, Country",
@@ -147,6 +147,7 @@ func TestServer_EditOrder(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, "{\"error\":\"order not found\"}", w.Body.String())
 
 	})
 
@@ -177,6 +178,7 @@ func TestServer_EditOrder(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		assert.Equal(t, `{"error":"server error"}`, w.Body.String())
 
 	})
 }

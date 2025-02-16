@@ -2,6 +2,7 @@ package repository
 
 import (
 	"awesomeProject1/internal/entity"
+	"errors"
 
 	"context"
 	"database/sql"
@@ -38,8 +39,8 @@ func (r *postgresRepository) GetOrderByID(ctx context.Context, id string) (*enti
 
 	err := row.Scan(&order.ID, &order.UserID, &order.Price)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return &order, nil
 		}
 		return nil, err
 	}
@@ -81,15 +82,34 @@ WHERE id = ?`,
 func (r *postgresRepository) GetOrders(ctx context.Context, req *entity.GetOrders) ([]entity.Order, error) {
 	var orders []entity.Order
 
-	_, err := r.db.QueryContext(ctx, `
+	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, user_id, price, delivery_deadline, delivery_type, address, order_status
 		FROM orders
-		WHERE user_id = $1
+		WHERE user_id = ?
 		ORDER BY created_at DESC`, req.UserID)
 
 	if err != nil {
 		return nil, err
 
+	}
+
+	for rows.Next() {
+		var order entity.Order
+		err := rows.Scan(
+			&order.ID,
+			&order.UserID,
+			&order.CreatedAt,
+			&order.UpdatedAt,
+			&order.DeliveryDeadLine,
+			&order.Price,
+			&order.DeliveryType,
+			&order.Address,
+			&order.OrderStatus,
+		)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
 	}
 
 	return orders, nil
