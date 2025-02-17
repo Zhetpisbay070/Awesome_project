@@ -35,12 +35,14 @@ func (r *postgresRepository) CreateOrder(ctx context.Context, order *entity.Orde
 func (r *postgresRepository) GetOrderByID(ctx context.Context, id string) (*entity.Order, error) {
 	var order entity.Order
 
-	row := r.db.QueryRowContext(ctx, `SELECT id, user_id, price FROM orders WHERE id = ?`, id)
+	row := r.db.QueryRowContext(ctx, `SELECT id, user_id,created_at, updated_at, delivery_deadline, 
+       price, delivery_type, address, order_status FROM orders WHERE id = ?`, id)
 
-	err := row.Scan(&order.ID, &order.UserID, &order.Price)
+	err := row.Scan(&order.ID, &order.UserID, &order.CreatedAt, &order.UpdatedAt, &order.DeliveryDeadLine,
+		&order.Price, &order.DeliveryType, &order.Address, &order.OrderStatus)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &order, nil
+			return nil, entity.ErrOrderNotFound
 		}
 		return nil, err
 	}
@@ -83,7 +85,7 @@ func (r *postgresRepository) GetOrders(ctx context.Context, req *entity.GetOrder
 	var orders []entity.Order
 
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT id, user_id, price, delivery_deadline, delivery_type, address, order_status
+		SELECT id, user_id, created_at, updated_at, delivery_deadline, price, delivery_type, address, order_status
 		FROM orders
 		WHERE user_id = ?
 		ORDER BY created_at DESC`, req.UserID)

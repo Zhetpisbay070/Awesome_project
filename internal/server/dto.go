@@ -15,16 +15,16 @@ type CreateOrderRequest struct {
 }
 
 type Order struct {
-	ID               string    `json:"id"`
-	UserID           string    `json:"user_id"`
-	ProductIDs       []string  `json:"product_ids"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	DeliveryDeadLine time.Time `json:"delivery_dead_line"`
-	Price            float64   `json:"price"`
-	DeliveryType     string    `json:"delivery_type"`
-	Address          string    `json:"address"`
-	OrderStatus      string    `json:"order_status"`
+	ID               string      `json:"id"`
+	UserID           string      `json:"user_id"`
+	ProductIDs       []string    `json:"product_ids"`
+	CreatedAt        AwesomeTime `json:"created_at"`
+	UpdatedAt        AwesomeTime `json:"updated_at"`
+	DeliveryDeadLine AwesomeTime `json:"delivery_dead_line"`
+	Price            float64     `json:"price"`
+	DeliveryType     string      `json:"delivery_type"`
+	Address          string      `json:"address"`
+	OrderStatus      string      `json:"order_status"`
 }
 
 type UpdateOrderStatusRequest struct {

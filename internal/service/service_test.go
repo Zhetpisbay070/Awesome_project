@@ -395,8 +395,8 @@ func TestEditOrder(t *testing.T) {
 			OrderStatus: entity.Done,
 		}, nil)
 
-		//repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
-		//
+		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
+
 		editReq := &entity.EditOrderRequest{
 			OrderID:  "1",
 			Products: []string{"prod3", "prod4"},

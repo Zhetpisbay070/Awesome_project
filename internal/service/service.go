@@ -29,6 +29,7 @@ type service struct {
 	logger   *logrus.Logger
 	repo     repository.DB
 	uuidFunc func() string
+	nowFunc  func() time.Time
 }
 
 func (s *service) CreateOrder(ctx context.Context, req *entity.CreateOrderRequest) (*entity.Order, error) {
@@ -43,7 +44,7 @@ func (s *service) CreateOrder(ctx context.Context, req *entity.CreateOrderReques
 		}
 	}
 
-	now := time.Now()
+	now := s.nowFunc()
 
 	order := entity.Order{
 		ID:           s.uuidFunc(),
@@ -68,7 +69,6 @@ func (s *service) CreateOrder(ctx context.Context, req *entity.CreateOrderReques
 func (s *service) UpdateOrderStatus(ctx context.Context, orderStatus entity.OrderStatus, orderID string) error {
 	order, err := s.repo.GetOrderByID(ctx, orderID)
 	if err != nil {
-
 		return err
 	}
 
@@ -149,7 +149,7 @@ func (s *service) GetOrders(ctx context.Context, req *entity.GetOrders) ([]entit
 func (s *service) EditOrder(ctx context.Context, req *entity.EditOrderRequest) (*entity.Order, error) {
 	order, err := s.repo.GetOrderByID(ctx, req.OrderID)
 	if err != nil {
-		return nil, entity.ErrOrderNotFound
+		return nil, err
 	}
 
 	if order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {

@@ -6,21 +6,14 @@ import (
 	internalMock "awesomeProject1/internal/mock"
 	"awesomeProject1/internal/server"
 	"bytes"
-	_ "bytes"
+
 	"encoding/json"
-	_ "encoding/json"
 	"errors"
-	_ "errors"
-	_ "github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	_ "github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	_ "github.com/stretchr/testify/mock"
 	"net/http"
-	_ "net/http"
 	"net/http/httptest"
-	_ "net/http/httptest"
 	"testing"
 	"time"
 )
@@ -38,13 +31,15 @@ func TestServer_CreateOrder(t *testing.T) {
 		reqJSON, err := json.Marshal(reqDTO)
 		assert.NoError(t, err)
 
+		timeNow := time.Now()
+
 		respDTO := &server.Order{
 			ID:               "ORD123456",
 			UserID:           "USR78910",
 			ProductIDs:       []string{"PROD001", "PROD002", "PROD003"},
-			CreatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
-			UpdatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
-			DeliveryDeadLine: time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))).Add(48 * time.Hour),
+			CreatedAt:        server.AwesomeTime(timeNow),
+			UpdatedAt:        server.AwesomeTime(timeNow),
+			DeliveryDeadLine: server.AwesomeTime(timeNow.Add(48 * time.Hour)),
 			Price:            99.99,
 			DeliveryType:     "Standard",
 			Address:          "123 Main Street, City, Country",
@@ -58,9 +53,9 @@ func TestServer_CreateOrder(t *testing.T) {
 			ID:               "ORD123456",
 			UserID:           "USR78910",
 			ProductIDs:       []string{"PROD001", "PROD002", "PROD003"},
-			CreatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
-			UpdatedAt:        time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))),
-			DeliveryDeadLine: time.Time(server.AwesomeTime(time.Now().Truncate(time.Second))).Add(48 * time.Hour),
+			CreatedAt:        time.Now().Truncate(time.Second),
+			UpdatedAt:        time.Now().Truncate(time.Second),
+			DeliveryDeadLine: time.Now().Truncate(time.Second).Add(48 * time.Hour),
 			Price:            99.99,
 			DeliveryType:     "Standard",
 			Address:          "123 Main Street, City, Country",
@@ -83,6 +78,72 @@ func TestServer_CreateOrder(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Equal(t, string(respJSON), w.Body.String())
 	})
+}
+func TestServer_UpdateOrderStatus(t *testing.T) {
+	t.Run("order update success", func(t *testing.T) {
+		serviceMock := internalMock.NewOrderService(t)
+
+		reqDTO := &server.UpdateOrderStatusRequest{
+			OrderID:     "1",
+			OrderStatus: "Delivered",
+		}
+
+		reqJSON, err := json.Marshal(reqDTO)
+		assert.NoError(t, err)
+
+		serviceMock.EXPECT().UpdateOrderStatus(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		s := server.NewServer(serviceMock, logrus.New())
+
+		r := s.SetupRouter()
+
+		w := httptest.NewRecorder()
+
+		body := bytes.NewBuffer(reqJSON)
+
+		req, err := http.NewRequest("POST", "/update", body)
+		assert.NoError(t, err)
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+	})
+}
+
+func TestServer_GetOrders(t *testing.T) {
+	t.Run("get orders success", func(t *testing.T) {
+		serviceMock := internalMock.NewOrderService(t)
+
+		reqDTO := &entity.GetOrders{
+			UserID: "1",
+			Limit:  10,
+			Page:   1,
+			Asc:    true,
+		}
+
+		reqJSON, err := json.Marshal(reqDTO)
+		assert.NoError(t, err)
+
+		serviceMock.EXPECT().GetOrders(mock.Anything, mock.Anything).Return([]entity.Order{}, nil)
+
+		s := server.NewServer(serviceMock, logrus.New())
+
+		r := s.SetupRouter()
+
+		w := httptest.NewRecorder()
+
+		body := bytes.NewBuffer(reqJSON)
+
+		req, err := http.NewRequest("POST", "/getOrders", body)
+		assert.NoError(t, err)
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+	})
+
 }
 
 func TestServer_EditOrder(t *testing.T) {
