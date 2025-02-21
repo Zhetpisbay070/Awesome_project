@@ -5,6 +5,7 @@ import (
 	"awesomeProject1/internal/repository"
 	"context"
 	_ "errors"
+	"fmt"
 	_ "fmt"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -21,8 +22,8 @@ type OrderService interface {
 	EditOrder(ctx context.Context, req *entity.EditOrderRequest) (*entity.Order, error)
 }
 
-func NewOrderService(repo repository.DB, uuidFunc func() string, logger *logrus.Logger) OrderService {
-	return &service{repo: repo, uuidFunc: uuidFunc, logger: logger}
+func NewOrderService(repo repository.DB, uuidFunc func() string, nowFunc func() time.Time, logger *logrus.Logger) OrderService {
+	return &service{repo: repo, uuidFunc: uuidFunc, nowFunc: nowFunc, logger: logger}
 }
 
 type service struct {
@@ -72,61 +73,112 @@ func (s *service) UpdateOrderStatus(ctx context.Context, orderStatus entity.Orde
 		return err
 	}
 
+	fmt.Println("Current order status:", order.OrderStatus)
+	fmt.Println("Requested transition to:", orderStatus)
+
 	if order.OrderStatus == entity.Created {
 		if orderStatus == entity.Paid {
 			order.OrderStatus = entity.Paid
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+			return nil
 		} else if orderStatus == entity.Cancelled {
 			order.OrderStatus = entity.Cancelled
-		} else {
-			return entity.InvalidTransition
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+			return nil
 		}
+		return entity.InvalidTransition
 	}
 
 	if order.OrderStatus == entity.Paid {
 		if orderStatus == entity.Collect {
 			order.OrderStatus = entity.Collect
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+			return nil
 		} else if orderStatus == entity.Cancelled {
 			order.OrderStatus = entity.Cancelled
-		} else {
-			return entity.InvalidTransition
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+			return nil
 		}
+		return entity.InvalidTransition
+	}
 
-	} else if order.OrderStatus == entity.Collect {
+	if order.OrderStatus == entity.Collect {
 		if orderStatus == entity.Collected {
 			order.OrderStatus = entity.Collected
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+
+			return nil
+
 		} else if orderStatus == entity.Cancelled {
 			order.OrderStatus = entity.Cancelled
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		}
-	} else {
+
 		return entity.InvalidTransition
 	}
 
 	if order.OrderStatus == entity.Collected {
 		if orderStatus == entity.Delivery {
 			order.OrderStatus = entity.Delivery
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+
+			return nil
+
 		} else if orderStatus == entity.Cancelled {
 			order.OrderStatus = entity.Cancelled
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		}
-	} else {
+
 		return entity.InvalidTransition
 	}
 
 	if order.OrderStatus == entity.Delivery {
 		if orderStatus == entity.Done {
-		} else if orderStatus == entity.Cancelled {
-			order.OrderStatus = entity.Cancelled
+			order.OrderStatus = entity.Done
+			err = s.repo.UpdateOrder(ctx, order)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		}
-		order.OrderStatus = entity.Done
-	} else {
-		return entity.InvalidTransition
 	}
 
 	if order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {
 		if orderStatus == entity.Cancelled {
-			return entity.PozdnoNahui
-		} else {
-			order.OrderStatus = entity.Cancelled
+			fmt.Println("try to cancel a delivered or done order")
+			return entity.Pozdno
+
 		}
+
 	}
 
 	err = s.repo.UpdateOrder(ctx, order)
@@ -151,12 +203,11 @@ func (s *service) EditOrder(ctx context.Context, req *entity.EditOrderRequest) (
 	if err != nil {
 		return nil, err
 	}
-
-	if order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {
+	if (order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done) && len(req.Products) > 0 {
 		return nil, entity.OrderCannotBeEdited
 	}
 
-	if order.OrderStatus == entity.Done {
+	if order.OrderStatus == entity.Done && req.Address != "" {
 		return nil, entity.AddressCannotBeEdited
 	}
 
@@ -173,5 +224,5 @@ func (s *service) EditOrder(ctx context.Context, req *entity.EditOrderRequest) (
 		return nil, err
 	}
 
-	return order, err
+	return order, nil
 }

@@ -1,6 +1,5 @@
 package main
 
-//
 //import (
 //	"awesomeProject1/config"
 //	"awesomeProject1/internal/repository"
@@ -9,22 +8,26 @@ package main
 //	_ "awesomeProject1/internal/server"
 //	"awesomeProject1/internal/service"
 //	_ "awesomeProject1/internal/service"
-//	"context"
+//	_ "context"
 //	"database/sql"
 //	"errors"
+//	_ "errors"
+//	"github.com/gorilla/mux"
+//	"github.com/prometheus/client_golang/prometheus/promhttp"
 //	"log"
 //	"net/http"
+//	_ "net/http"
 //	"os"
 //	"os/signal"
 //	"strings"
 //	"syscall"
 //
 //	"github.com/caarlos0/env"
-//	"github.com/gorilla/mux"
+//	_ "github.com/gorilla/mux"
 //	"github.com/sirupsen/logrus"
 //
 //	"github.com/go-sql-driver/mysql"
-//	"github.com/prometheus/client_golang/prometheus/promhttp"
+//	_ "github.com/prometheus/client_golang/prometheus/promhttp"
 //)
 //
 //const dbName = "orders"
