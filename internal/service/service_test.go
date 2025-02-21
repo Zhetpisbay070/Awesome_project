@@ -213,7 +213,7 @@ func TestService_CreateOrder(t *testing.T) {
 		}
 
 		repo.EXPECT().GetOrderByID(mock.Anything, "1").Return(order, nil)
-		//repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
+		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
 		err := s.UpdateOrderStatus(context.Background(), entity.Collect, "1")
 
