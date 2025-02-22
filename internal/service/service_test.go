@@ -213,11 +213,10 @@ func TestService_CreateOrder(t *testing.T) {
 		}
 
 		repo.EXPECT().GetOrderByID(mock.Anything, "1").Return(order, nil)
-		//repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
+		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
 		err := s.UpdateOrderStatus(context.Background(), entity.Collect, "1")
 
-		assert.NoError(t, err)
 		assert.NoError(t, err)
 	})
 
@@ -366,31 +365,22 @@ func TestEditOrder(t *testing.T) {
 		}, logrus.New())
 
 		repo.EXPECT().GetOrderByID(mock.Anything, mock.Anything).Return(&entity.Order{
-			ID:          "1",
-			Address:     "old address",
-			ProductIDs:  []string{"prod1, prod2"},
-			OrderStatus: entity.Created,
+			ID:         "1",
+			Address:    "old address",
+			ProductIDs: []string{"prod1, prod2"},
 		}, nil)
 
 		repo.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
 		editReq := &entity.EditOrderRequest{
 			OrderID:  "1",
-			Products: []string{"prod3", "prod4"},
 			Address:  "new address",
+			Products: []string{"prod3", "prod4"},
 		}
 
 		_, err := s.EditOrder(context.Background(), editReq)
 		assert.NoError(t, err)
 
-		updatedOrder := &entity.Order{
-			ID:          "1",
-			Address:     "new address",
-			ProductIDs:  []string{"prod3", "prod4"},
-			OrderStatus: entity.Created,
-		}
-		assert.Equal(t, updatedOrder.Address, "new address")
-		assert.ElementsMatch(t, updatedOrder.ProductIDs, []string{"prod3", "prod4"})
 	})
 
 	t.Run("order cannot be edited in this current status", func(t *testing.T) {

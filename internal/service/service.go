@@ -174,7 +174,6 @@ func (s *service) UpdateOrderStatus(ctx context.Context, orderStatus entity.Orde
 
 	if order.OrderStatus == entity.Delivery || order.OrderStatus == entity.Done {
 		if orderStatus == entity.Cancelled {
-			fmt.Println("try to cancel a delivered or done order")
 			return entity.Pozdno
 
 		}
